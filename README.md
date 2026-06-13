@@ -26,14 +26,14 @@ The API key stays server-side only.
 # Install dependencies (one-time)
 npm run install:all
 
-# Terminal 1 — backend (port 3001)
+# Terminal 1 — backend (port 8001)
 npm run dev:backend
 
-# Terminal 2 — frontend (port 5173)
+# Terminal 2 — frontend (port 8000)
 npm run dev:frontend
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open [http://localhost:8000](http://localhost:8000)
 
 ## Deploy to Render (free)
 

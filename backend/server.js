@@ -10,8 +10,8 @@ const { getMockPlan } = require('./mockPlan');
 const { generatePlan } = require('./gemini');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === 'production';
+const PORT = isProd ? process.env.PORT || 8001 : 8001;
 
 app.use(
   cors({
