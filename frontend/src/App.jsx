@@ -12,6 +12,7 @@ export default function App() {
   const handleSubmit = async (formData) => {
     setStatus('loading');
     setError('');
+    setPlan(null);
 
     try {
       const result = await fetchPlan(formData);
@@ -23,34 +24,62 @@ export default function App() {
     }
   };
 
+  const handleReset = () => {
+    setStatus('idle');
+    setPlan(null);
+    setError('');
+  };
+
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-8">
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-orange-700">MoodMeal</h1>
-        <p className="mt-1 text-stone-600">AI cooking planner</p>
-      </header>
+    <>
+      {/* Animated gradient background */}
+      <div className="mm-bg" />
 
-      {status === 'idle' && (
-        <p className="mb-6 rounded-lg border border-dashed border-stone-300 bg-white px-4 py-6 text-center text-stone-600">
-          Tell MoodMeal about your day and mood to get a personalized meal plan
-        </p>
-      )}
+      <div className="mx-auto min-h-screen max-w-2xl px-4 py-10 pb-20">
+        {/* ── Header ── */}
+        <header className="mb-10 text-center">
+          <div className="animate-mm-float mb-4 inline-block text-5xl">🍽️</div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-white">
+            Mood<span style={{ color: 'var(--orange)' }}>Meal</span>
+          </h1>
+          <p className="mt-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            AI-powered meal plans tailored to your mood, budget &amp; pantry
+          </p>
+        </header>
 
-      <MealPlanForm onSubmit={handleSubmit} disabled={status === 'loading'} />
+        {/* ── Form ── */}
+        <MealPlanForm onSubmit={handleSubmit} disabled={status === 'loading'} />
 
-      {status === 'loading' && <LoadingSpinner />}
+        {/* ── Loading ── */}
+        {status === 'loading' && <LoadingSpinner />}
 
-      {status === 'error' && (
-        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </p>
-      )}
+        {/* ── Error ── */}
+        {status === 'error' && (
+          <div className="mm-card animate-mm-fade-in mt-6 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 text-lg">⚠️</span>
+              <div>
+                <p className="text-sm font-semibold text-red-400">Something went wrong</p>
+                <p className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleReset}
+              className="mt-3 text-xs font-semibold underline"
+              style={{ color: 'var(--orange)' }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
-      {status === 'success' && plan && (
-        <div className="mt-8">
-          <PlanResults plan={plan} />
-        </div>
-      )}
-    </div>
+        {/* ── Results ── */}
+        {status === 'success' && plan && (
+          <div className="mt-8">
+            <PlanResults plan={plan} onReset={handleReset} />
+          </div>
+        )}
+      </div>
+    </>
   );
 }

@@ -1,124 +1,181 @@
-function Section({ title, children }) {
+/* ────────────────────────────────
+   PlanResults — premium dark UI
+   ──────────────────────────────── */
+
+const MEAL_LABELS = {
+  breakfast: { label: 'Breakfast', emoji: '🌅' },
+  lunch:     { label: 'Lunch',     emoji: '☀️' },
+  dinner:    { label: 'Dinner',    emoji: '🌙' },
+};
+
+const GROCERY_ICONS = {
+  produce: '🥦',
+  pantry:  '🥫',
+  dairy:   '🥛',
+  other:   '🛍️',
+};
+
+/* ── Sub-components ── */
+
+function ResultSection({ icon, title, children, className = '' }) {
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+    <section className={`mm-card mm-result-section p-5 ${className}`}>
+      <div className="mm-section-title">
+        <span>{icon}</span>
+        <span>{title}</span>
+      </div>
       {children}
     </section>
   );
 }
 
-function GroceryCategory({ label, items }) {
+function GroceryCategory({ category, items }) {
   if (!items?.length) return null;
   return (
     <div>
-      <h3 className="mb-1 text-sm font-medium capitalize text-stone-700">{label}</h3>
-      <ul className="list-inside list-disc text-sm text-stone-600">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+        {GROCERY_ICONS[category] || '📦'} {category}
+      </p>
+      <div className="flex flex-wrap gap-1.5">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <span key={item} className="grocery-tag">{item}</span>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
 
 function normalizeSteps(todoList) {
   if (!todoList?.length) return [];
-
   return [...todoList]
     .map((item, index) => ({
       step: item.step ?? index + 1,
       instruction: item.instruction || item.task || '',
+      time: item.time || null,
     }))
     .sort((a, b) => a.step - b.step);
 }
 
-const MEAL_LABELS = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
-};
+/* ── Main Component ── */
 
-export default function PlanResults({ plan }) {
+export default function PlanResults({ plan, onReset }) {
   const steps = normalizeSteps(plan.todoList);
-  const mealLabel = MEAL_LABELS[plan.mealPlan?.meal] || 'Meal';
+  const mealKey   = plan.mealPlan?.meal || 'breakfast';
+  const mealMeta  = MEAL_LABELS[mealKey] || { label: 'Meal', emoji: '🍽️' };
+  const { withinBudget, estimatedTotal, notes } = plan.budgetAnalysis || {};
 
   return (
     <div className="space-y-4">
+      {/* Fallback notice */}
       {plan._fallback && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-          Showing sample plan (AI unavailable)
-        </p>
+        <div className="mm-badge mm-badge-amber animate-mm-fade-in flex items-center gap-2 rounded-xl px-4 py-3 text-sm">
+          ⚠️ Showing a sample plan — AI is temporarily unavailable
+        </div>
       )}
 
-      <Section title="🍳 Meal Plan">
-        <dl className="space-y-2 text-sm">
-          <div>
-            <dt className="font-medium">{mealLabel}</dt>
-            <dd className="font-medium text-stone-800">{plan.mealPlan.dish}</dd>
-            {plan.mealPlan.description && (
-              <dd className="mt-1 text-stone-600">{plan.mealPlan.description}</dd>
-            )}
+      {/* ── Meal Plan ── */}
+      <ResultSection icon="🍳" title="Meal Plan">
+        <div
+          className="rounded-xl p-4"
+          style={{ background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.18)' }}
+        >
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-lg">{mealMeta.emoji}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--orange)' }}>
+              {mealMeta.label}
+            </span>
           </div>
-        </dl>
-      </Section>
-
-      <Section title="🛒 Grocery List">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <GroceryCategory label="produce" items={plan.groceryList.produce} />
-          <GroceryCategory label="pantry" items={plan.groceryList.pantry} />
-          <GroceryCategory label="dairy" items={plan.groceryList.dairy} />
-          <GroceryCategory label="other" items={plan.groceryList.other} />
+          <p className="text-xl font-bold text-white">{plan.mealPlan?.dish}</p>
+          {plan.mealPlan?.description && (
+            <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              {plan.mealPlan.description}
+            </p>
+          )}
         </div>
-      </Section>
+      </ResultSection>
 
-      <Section title="🔄 Substitutions">
-        {plan.substitutions?.length ? (
-          <ul className="space-y-3 text-sm">
-            {plan.substitutions.map((sub, index) => (
-              <li key={index} className="rounded-lg bg-stone-50 p-3">
-                <p>
-                  <span className="font-medium">{sub.original}</span>
-                  {' → '}
-                  <span className="font-medium">{sub.substitute}</span>
-                </p>
-                <p className="mt-1 text-stone-600">{sub.reason}</p>
+      {/* ── Budget ── */}
+      <ResultSection icon="💰" title="Budget Analysis">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-3xl font-extrabold text-white">₹{estimatedTotal}</span>
+          <span className={`mm-badge ${withinBudget ? 'mm-badge-green' : 'mm-badge-red'}`}>
+            {withinBudget ? '✓ Within budget' : '✗ Over budget'}
+          </span>
+        </div>
+        {notes && (
+          <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {notes}
+          </p>
+        )}
+      </ResultSection>
+
+      {/* ── Grocery List ── */}
+      <ResultSection icon="🛒" title="Grocery List">
+        <div className="space-y-4">
+          {['produce', 'pantry', 'dairy', 'other'].map((cat) => (
+            <GroceryCategory key={cat} category={cat} items={plan.groceryList?.[cat]} />
+          ))}
+        </div>
+      </ResultSection>
+
+      {/* ── Substitutions ── */}
+      {plan.substitutions?.length > 0 && (
+        <ResultSection icon="🔄" title="Smart Substitutions">
+          <div className="space-y-3">
+            {plan.substitutions.map((sub, i) => (
+              <div
+                key={i}
+                className="rounded-xl p-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}
+              >
+                <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                  <span className="text-white">{sub.original}</span>
+                  <span style={{ color: 'var(--orange)' }}>→</span>
+                  <span className="text-white">{sub.substitute}</span>
+                </div>
+                {sub.reason && (
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {sub.reason}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </ResultSection>
+      )}
+
+      {/* ── To-Do / Steps ── */}
+      {steps.length > 0 && (
+        <ResultSection icon="✅" title="Cooking Steps">
+          <ol className="space-y-3">
+            {steps.map((item) => (
+              <li key={item.step} className="flex gap-3">
+                <span className="step-circle shrink-0">{item.step}</span>
+                <div className="pt-0.5">
+                  {item.time && (
+                    <span
+                      className="mb-0.5 block text-xs font-semibold"
+                      style={{ color: 'var(--orange)' }}
+                    >
+                      {item.time}
+                    </span>
+                  )}
+                  <span className="text-sm leading-relaxed text-white">{item.instruction}</span>
+                </div>
               </li>
             ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-stone-500">No substitutions suggested.</p>
-        )}
-      </Section>
+          </ol>
+        </ResultSection>
+      )}
 
-      <Section title="💰 Budget Analysis">
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-lg font-semibold">
-            ₹{plan.budgetAnalysis.estimatedTotal}
-          </span>
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${plan.budgetAnalysis.withinBudget
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
-              }`}
-          >
-            {plan.budgetAnalysis.withinBudget ? 'Within budget' : 'Over budget'}
-          </span>
-        </div>
-        <p className="mt-2 text-sm text-stone-600">{plan.budgetAnalysis.notes}</p>
-      </Section>
-
-      <Section title="✅ Cooking To-Do List">
-        <ol className="space-y-3 text-sm">
-          {steps.map((item) => (
-            <li key={item.step} className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
-                {item.step}
-              </span>
-              <span className="pt-0.5">{item.instruction}</span>
-            </li>
-          ))}
-        </ol>
-      </Section>
+      {/* ── Plan Again CTA ── */}
+      <button
+        onClick={onReset}
+        className="mm-btn"
+        style={{ marginTop: '0.5rem' }}
+      >
+        🔁 Plan Another Meal
+      </button>
     </div>
   );
 }
