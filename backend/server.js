@@ -1,17 +1,21 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+}
 
 const { getMockPlan } = require('./mockPlan');
 const { generatePlan } = require('./gemini');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const isProd = process.env.NODE_ENV === 'production';
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || (isProd ? true : 'http://localhost:5173'),
   })
 );
 app.use(express.json({ limit: '32kb' }));
@@ -59,6 +63,14 @@ app.post('/api/plan', async (req, res) => {
     return res.json(getMockPlan(input));
   }
 });
+
+if (isProd) {
+  const distPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`MoodMeal backend running on http://localhost:${PORT}`);

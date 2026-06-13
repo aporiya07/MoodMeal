@@ -1,6 +1,10 @@
 # MoodMeal — AI cooking planner
 
-Structured daily meal planning based on your mood, budget, diet, and ingredients on hand.
+Structured meal planning based on your mood, budget, diet, and ingredients on hand.
+
+## Repo size
+
+**Only source code is pushed (~50 KB).** Do not commit `node_modules/` or `dist/` — they are gitignored. Run `npm install` locally after cloning.
 
 ## Prerequisites
 
@@ -8,51 +12,56 @@ Structured daily meal planning based on your mood, budget, diet, and ingredients
 
 ## Environment setup
 
-Create a `.env` file in the `Warm-Up-Challenge` folder (or copy from `example.env`):
+Copy `example.env` to `.env` in this folder:
 
 ```
 GEMINI_API_KEY=your_api_key_here
 ```
 
-The backend loads this via `dotenv` — the key is never exposed to the frontend.
+The API key stays server-side only.
 
-## Install & run
-
-Open two terminals:
-
-**Backend** (port 3001):
+## Local development
 
 ```bash
-cd Warm-Up-Challenge/backend
-npm install
-npm run dev
+# Install dependencies (one-time)
+npm run install:all
+
+# Terminal 1 — backend (port 3001)
+npm run dev:backend
+
+# Terminal 2 — frontend (port 5173)
+npm run dev:frontend
 ```
 
-**Frontend** (port 5173):
+Open [http://localhost:5173](http://localhost:5173)
+
+## Deploy to Render (free)
+
+1. Push this repo to [GitHub](https://github.com/aporiya07/MoodMeal)
+2. Go to [render.com](https://render.com) → **New +** → **Blueprint**
+3. Connect the `MoodMeal` repo — Render reads `render.yaml` automatically
+4. Set **GEMINI_API_KEY** in the Render dashboard environment variables
+5. Deploy — you get a single URL serving both frontend and API
+
+Or manually: **New Web Service** → connect repo → build command:
 
 ```bash
-cd Warm-Up-Challenge/frontend
-npm install
-npm run dev
+npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Start command:
+
+```bash
+NODE_ENV=production node backend/server.js
+```
 
 ## How it works
 
-1. Fill in mood, budget, people, diet, cooking time, and optional fields.
-2. Frontend sends a `POST /api/plan` request to the Express backend.
-3. Backend calls Gemini (`gemini-2.0-flash`) with all inputs in one prompt.
-4. Response is parsed as JSON and rendered in five sections: meal plan, grocery list, substitutions, budget analysis, and cooking to-do list.
-5. If the AI call or JSON parsing fails, a hardcoded mock plan is returned so the UI never breaks.
-
-## Manual test checklist
-
-- [ ] Form validates required fields
-- [ ] Loading spinner appears on submit
-- [ ] All five result sections render after submit
-- [ ] Backend returns valid JSON (AI or fallback mock)
-- [ ] Fallback banner shows when `_fallback: true`
+1. Pick a meal (breakfast / lunch / dinner), mood, budget, and preferences.
+2. Frontend calls `POST /api/plan`.
+3. Backend calls Gemini with all inputs in one prompt.
+4. Results show meal plan, grocery list, substitutions, budget analysis, and numbered cooking steps.
+5. If AI fails, a mock plan is returned so the UI never breaks.
 
 ## Hackathon submission blurb
 
