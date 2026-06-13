@@ -10,7 +10,7 @@ const { getMockPlan } = require('./mockPlan');
 const { generatePlan } = require('./gemini');
 
 const app = express();
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 const PORT = isProd ? process.env.PORT || 8001 : 8001;
 
 app.use(
@@ -72,6 +72,10 @@ if (isProd) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`MoodMeal backend running on http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`MoodMeal backend running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
